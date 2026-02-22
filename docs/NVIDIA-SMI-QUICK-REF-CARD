@@ -1,0 +1,26 @@
+┌─────────────────────────────────────────────────────────────────┐
+│               NVIDIA-SMI QUICK REFERENCE                         │
+├─────────────────────────────────────────────────────────────────┤
+│ BASIC                                                            │
+│   nvidia-smi                    # Basic GPU info                │
+│   nvidia-smi -l 1               # Update every 1 second         │
+│   nvidia-smi -q                 # Full query                    │
+├─────────────────────────────────────────────────────────────────┤
+│ CUSTOM QUERIES                                                   │
+│   nvidia-smi --query-gpu=name,temp,util,mem --format=csv        │
+│   nvidia-smi --query-compute-apps=pid,name,mem --format=csv     │
+├─────────────────────────────────────────────────────────────────┤
+│ TOPOLOGY & NVLINK                                                │
+│   nvidia-smi topo -m            # Topology matrix               │
+│   nvidia-smi nvlink -s          # NVLink status                 │
+├─────────────────────────────────────────────────────────────────┤
+│ DIAGNOSTICS                                                      │
+│   nvidia-smi -q -d ECC          # ECC errors                    │
+│   nvidia-smi -q -d CLOCK        # Clock info                    │
+│   nvidia-smi -q -d POWER        # Power info                    │
+├─────────────────────────────────────────────────────────────────┤
+│ MANAGEMENT                                                       │
+│   nvidia-smi -pm 1              # Enable persistence mode       │
+│   nvidia-smi -pl 300            # Set power limit (Watts)       │
+│   nvidia-smi --gpu-reset -i 0   # Reset GPU (careful!)          │
+└─────────────────────────────────────────────────────────────────┘

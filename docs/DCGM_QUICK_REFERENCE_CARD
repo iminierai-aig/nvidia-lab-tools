@@ -1,0 +1,33 @@
+DCGM QUICK REFERENCE CARD
+┌─────────────────────────────────────────────────────────────────┐
+│                    DCGM QUICK REFERENCE                          │
+├─────────────────────────────────────────────────────────────────┤
+│ DISCOVERY                                                        │
+│   dcgmi discovery -l              # List all GPUs               │
+│   dcgmi discovery -i              # Detailed info               │
+├─────────────────────────────────────────────────────────────────┤
+│ HEALTH                                                           │
+│   dcgmi health -c                 # Quick health check          │
+│   dcgmi health -s a               # Enable all watches          │
+│   dcgmi health -f                 # Fetch results               │
+├─────────────────────────────────────────────────────────────────┤
+│ MONITORING                                                       │
+│   dcgmi dmon                      # Real-time monitor           │
+│   dcgmi dmon -e 150,155,203,204   # Specific fields             │
+│   dcgmi dmon -d 1000 -c 60        # 1s interval, 60s duration   │
+├─────────────────────────────────────────────────────────────────┤
+│ DIAGNOSTICS                                                      │
+│   dcgmi diag -r 1                 # Quick (~1 min)              │
+│   dcgmi diag -r 2                 # Medium (~2 min)             │
+│   dcgmi diag -r 3                 # Long (~12 min)              │
+│   dcgmi diag -r 4                 # Extended (~60 min)          │
+├─────────────────────────────────────────────────────────────────┤
+│ KEY FIELD IDs                                                    │
+│   150 = GPU Temp    155 = Power    203 = GPU Util               │
+│   204 = Mem Util    230 = XID      100 = SM Clock               │
+├─────────────────────────────────────────────────────────────────┤
+│ THRESHOLDS                                                       │
+│   GPU Temp: Warning 75°C, Critical 85°C                         │
+│   Power: Warning 90%, Critical 95% of limit                     │
+│   ECC DBE: Any = Critical                                       │
+└─────────────────────────────────────────────────────────────────┘

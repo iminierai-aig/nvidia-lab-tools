@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA T4 Lab Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(118, 185, 0, 0.9); /* NVIDIA Green */
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header h1 { font-size: 1.8rem; }
+        .header .subtitle { opacity: 0.9; margin-top: 5px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h3 { color: #76b900; margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .metric { font-size: 2.5rem; font-weight: bold; }
+        .metric.warning { color: #ffc107; }
+        .metric.critical { color: #dc3545; }
+        .metric-label { opacity: 0.7; font-size: 0.85rem; margin-top: 5px; }
+        .chart-container { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 20px; margin-top: 20px; }
+        .status-bar { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 20px; }
+        .status-item { display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .status-dot.healthy { background: #28a745; }
+        .status-dot.warning { background: #ffc107; }
+        .status-dot.critical { background: #dc3545; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #76b900, #8bc34a); transition: width 0.3s; }
+        .progress-fill.warning { background: linear-gradient(90deg, #ffc107, #ff9800); }
+        .progress-fill.critical { background: linear-gradient(90deg, #dc3545, #ff5252); }
+        #alerts-list { max-height: 200px; overflow-y: auto; }
+        .alert-item { padding: 8px 12px; margin: 5px 0; border-radius: 6px; font-size: 0.85rem; }
+        .alert-item.WARNING { background: rgba(255,193,7,0.2); border-left: 3px solid #ffc107; }
+        .alert-item.CRITICAL { background: rgba(220,53,69,0.2); border-left: 3px solid #dc3545; }
+        footer { text-align: center; padding: 20px; opacity: 0.6; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖥️ NVIDIA T4 Lab Dashboard</h1>
+        <div class="subtitle">Dell PowerEdge R640 • Real-time GPU Monitoring</div>
+    </div>
+    
+    <div class="container">
+        <div class="status-bar">
+            <div class="status-item">
+                <div id="health-dot" class="status-dot healthy"></div>
+                <span id="health-status">System Healthy</span>
+            </div>
+            <div class="status-item">
+                <span id="gpu-name">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span id="last-update">--:--:--</span>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>🌡️ Temperature</h3>
+                <div id="temp-value" class="metric">--°C</div>
+                <div class="metric-label">GPU Core Temperature</div>
+                <div class="progress-bar"><div id="temp-bar" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="card">
+                <h3>⚡ GPU Utilization</h3>
+                <div id="util-value" class="metric">--%</div>
+                <div class="metric-label">Compute Usage</div>
+                <div class="progress-bar"><div id="util-bar" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="card">
+                <h3>💾 Memory Usage</h3>
+                <div id="mem-value" class="metric">-- / -- GB</div>
+                <div class="metric-label" id="mem-percent">--%</div>
+                <div class="progress-bar"><div id="mem-bar" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="card">
+                <h3>🔌 Power Draw</h3>
+                <div id="power-value" class="metric">-- W</div>
+                <div class="metric-label" id="power-limit">Limit: -- W</div>
+                <div class="progress-bar"><div id="power-bar" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="card">
+                <h3>🕐 SM Clock</h3>
+                <div id="sm-clock" class="metric">-- MHz</div>
+                <div class="metric-label">Streaming Multiprocessor</div>
+            </div>
+            <div class="card">
+                <h3>🕐 Memory Clock</h3>
+                <div id="mem-clock" class="metric">-- MHz</div>
+                <div class="metric-label">GDDR6 Memory</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h3 style="color: #76b900; margin-bottom: 15px;">📈 Temperature & Utilization History</h3>
+            <canvas id="historyChart" height="100"></canvas>
+        </div>
+        
+        <div class="card" style="margin-top: 20px;">
+            <h3>⚠️ Recent Alerts</h3>
+            <div id="alerts-list">
+                <div style="opacity: 0.5; padding: 20px; text-align: center;">No alerts</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        GPU Lab Dashboard v1.0 • Built for NVIDIA Data Center Technician Portfolio
+    </footer>
+    
+    <script>
+        let chart;
+        
+        function updateMetrics() {
+            fetch('/api/current')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data) return;
+                    
+                    document.getElementById('gpu-name').textContent = data.gpu_name || 'Unknown GPU';
+                    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                    
+                    // Temperature
+                    const temp = data.temperature || 0;
+                    document.getElementById('temp-value').textContent = `${temp}°C`;
+                    document.getElementById('temp-value').className = 'metric' + (temp > 80 ? ' critical' : temp > 70 ? ' warning' : '');
+                    document.getElementById('temp-bar').style.width = `${(temp/100)*100}%`;
+                    document.getElementById('temp-bar').className = 'progress-fill' + (temp > 80 ? ' critical' : temp > 70 ? ' warning' : '');
+                    
+                    // Utilization
+                    const util = data.utilization || 0;
+                    document.getElementById('util-value').textContent = `${util}%`;
+                    document.getElementById('util-bar').style.width = `${util}%`;
+                    
+                    // Memory
+                    const memUsed = (data.memory_used / 1024).toFixed(1);
+                    const memTotal = (data.memory_total / 1024).toFixed(1);
+                    const memPct = data.memory_total ? (data.memory_used / data.memory_total) * 100 : 0;
+                    document.getElementById('mem-value').textContent = `${memUsed} / ${memTotal} GB`;
+                    document.getElementById('mem-percent').textContent = `${memPct.toFixed(1)}%`;
+                    document.getElementById('mem-bar').style.width = `${memPct}%`;
+                    document.getElementById('mem-bar').className = 'progress-fill' + (memPct > 95 ? ' critical' : memPct > 85 ? ' warning' : '');
+                    
+                    // Power
+                    const power = data.power_draw || 0;
+                    const powerLimit = data.power_limit || 70;
+                    document.getElementById('power-value').textContent = `${power.toFixed(1)} W`;
+                    document.getElementById('power-limit').textContent = `Limit: ${powerLimit} W`;
+                    document.getElementById('power-bar').style.width = `${(power/powerLimit)*100}%`;
+                    
+                    // Clocks
+                    document.getElementById('sm-clock').textContent = `${data.sm_clock || '--'} MHz`;
+                    document.getElementById('mem-clock').textContent = `${data.mem_clock || '--'} MHz`;
+                    
+                    // Health status
+                    const healthDot = document.getElementById('health-dot');
+                    const healthStatus = document.getElementById('health-status');
+                    if (temp > 80 || memPct > 95) {
+                        healthDot.className = 'status-dot critical';
+                        healthStatus.textContent = 'Critical';
+                    } else if (temp > 70 || memPct > 85) {
+                        healthDot.className = 'status-dot warning';
+                        healthStatus.textContent = 'Warning';
+                    } else {
+                        healthDot.className = 'status-dot healthy';
+                        healthStatus.textContent = 'System Healthy';
+                    }
+                });
+        }
+        
+        function updateChart() {
+            fetch('/api/history/1h')
+                .then(r => r.json())
+                .then(data => {
+                    const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString());
+                    const temps = data.map(d => d.temperature);
+                    const utils = data.map(d => d.utilization);
+                    
+                    if (chart) {
+                        chart.data.labels = labels;
+                        chart.data.datasets[0].data = temps;
+                        chart.data.datasets[1].data = utils;
+                        chart.update();
+                    } else {
+                        const ctx = document.getElementById('historyChart').getContext('2d');
+                        chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Temperature (°C)',
+                                    data: temps,
+                                    borderColor: '#ff6384',
+                                    tension: 0.3,
+                                    fill: false
+                                }, {
+                                    label: 'Utilization (%)',
+                                    data: utils,
+                                    borderColor: '#76b900',
+                                    tension: 0.3,
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { legend: { labels: { color: '#eee' } } },
+                                scales: {
+                                    x: { ticks: { color: '#999', maxTicksLimit: 10 } },
+                                    y: { ticks: { color: '#999' }, min: 0, max: 100 }
+                                }
+                            }
+                        });
+                    }
+                });
+        }
+        
+        function updateAlerts() {
+            fetch('/api/alerts')
+                .then(r => r.json())
+                .then(alerts => {
+                    const container = document.getElementById('alerts-list');
+                    if (!alerts.length) {
+                        container.innerHTML = '<div style="opacity: 0.5; padding: 20px; text-align: center;">No alerts</div>';
+                        return;
+                    }
+                    container.innerHTML = alerts.slice(0, 10).map(a => 
+                        `<div class="alert-item ${a.type}">
+                            <strong>${a.type}</strong> ${a.message} (${a.value?.toFixed(1)} / ${a.threshold})
+                            <div style="opacity: 0.6; font-size: 0.75rem;">${new Date(a.timestamp).toLocaleString()}</div>
+                        </div>`
+                    ).join('');
+                });
+        }
+        
+        // Initial load
+        updateMetrics();
+        updateChart();
+        updateAlerts();
+        
+        // Refresh intervals
+        setInterval(updateMetrics, 2000);
+        setInterval(updateChart, 30000);
+        setInterval(updateAlerts, 10000);
+    </script>
+</body>
+</html>

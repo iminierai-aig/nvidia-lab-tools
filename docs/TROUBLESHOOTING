@@ -1,0 +1,29 @@
+"CUDA not available" in Python
+Copy# Check if NVIDIA driver is loaded
+nvidia-smi
+
+# Check PyTorch CUDA
+python -c "import torch; print(torch.cuda.is_available())"
+
+# Reinstall PyTorch with CUDA
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+"nvidia-smi: command not found"
+Copy# Check driver installation
+ls /usr/bin/nvidia-*
+
+# On RunPod, drivers should be pre-installed
+# If missing, you may need a different template
+GPU shows 0% utilization during stress test
+Copy# Ensure CUDA operations are synchronous
+torch.cuda.synchronize()
+
+# Check if tensors are on GPU
+print(tensor.device)  # Should show 'cuda:0'
+
+High temperature warnings
+
+Copy# Check current temp
+nvidia-smi --query-gpu=temperature.gpu --format=csv
+
+# If > 85°C, reduce workload or check cooling
+# Datacenter GPUs can run hot but should stay < 90°C

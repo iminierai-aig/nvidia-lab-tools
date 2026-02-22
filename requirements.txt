@@ -1,0 +1,16 @@
+# No external dependencies required
+# All scripts use Python standard library only
+
+# Modules we'll use today
+import subprocess      # Run shell commands
+import csv            # Read/write CSV files
+import json           # Read/write JSON files
+import datetime       # Timestamps
+import time           # Sleep/delays
+import os             # File/directory operations
+import re             # Regular expressions (log parsing)
+import argparse       # Command-line arguments
+from pathlib import Path  # Modern file paths
+
+# Optional: Jira integration
+jira>=3.5.0

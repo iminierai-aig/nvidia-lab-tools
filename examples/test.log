@@ -1,0 +1,9 @@
+2026-02-03 10:15:23 INFO System starting up
+2026-02-03 10:15:25 WARNING High temperature detected on sensor 3
+2026-02-03 10:15:30 ERROR NVIDIA driver failed to initialize
+2026-02-03 10:15:31 NVRM: Xid (PCI:0000:18:00): 79, GPU has fallen off the bus
+2026-02-03 10:15:35 INFO GPU 0: Memory ECC check passed
+2026-02-03 10:15:40 WARNING NCCL warning: Network timeout
+2026-02-03 10:15:45 ERROR CUDA out of memory on device 2
+2026-02-03 10:15:50 INFO NVLink connection established
+2026-02-03 10:15:55 WARNING PCIe link degraded to x8
